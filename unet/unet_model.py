@@ -24,14 +24,7 @@ class UNet(nn.Module):
         self.up3 = Up(512//fac, 256//fac // factor, bilinear)
         self.up4 = Up(256//fac, 128//fac // factor, bilinear)
         self.up5 = Up(128//fac, 64//fac, bilinear)
-        if bilinear:
-            self.outc = OutConv((512)//fac, n_classes)
-        else:
-            self.outc = OutConv((64+128+256+512)//fac, n_classes)
-
-        self.up_s8 = customUp(8)
-        self.up_s4 = customUp(4)
-        self.up_s2 = customUp(2)
+        self.outc = OutConv(64//fac, n_classes)
 
     def forward(self, x):
         x1 = self.inc(x)
