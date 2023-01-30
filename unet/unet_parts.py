@@ -67,6 +67,16 @@ class Up(nn.Module):
         x = torch.cat([x2, x1], dim=1)
         return self.conv(x)
 
+class customUp(nn.Module):
+
+    def __init__(self, up_factor):
+        super().__init__()
+        self.up = nn.Upsample(scale_factor=up_factor, mode='bilinear', align_corners=True)
+
+    def forward(self, x):
+        x1 = self.up(x)
+        return x1
+
 
 class OutConv(nn.Module):
     def __init__(self, in_channels, out_channels):

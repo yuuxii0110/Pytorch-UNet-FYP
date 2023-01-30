@@ -1,9 +1,11 @@
 *.pyc
-data/
 __pycache__/
-checkpoints/
 *.pth
+*.png
 *.jpg
 venv/
 .idea/
 wandb/
+*.onnx
+*.wts
+
