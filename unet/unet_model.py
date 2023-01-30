@@ -10,28 +10,17 @@ class UNet(nn.Module):
         self.n_classes = n_classes
         self.bilinear = bilinear
 
-        fac = 2
-
-        self.inc = DoubleConv(n_channels, 64//fac)
-        self.down1 = Down(64//fac, 128//fac)
-        self.down2 = Down(128//fac, 256//fac)
-        self.down3 = Down(256//fac, 512//fac)
-        self.down4 = Down(512//fac, 1024//fac)
+        self.inc = DoubleConv(n_channels, 64)
+        self.down1 = Down(64, 128)
+        self.down2 = Down(128, 256)
+        self.down3 = Down(256, 512)
         factor = 2 if bilinear else 1
-        self.down5 = Down(1024//fac, 2048//fac//factor)
-        self.up1 = Up(2048//fac, 1024//fac // factor, bilinear)
-        self.up2 = Up(1024//fac, 512//fac // factor, bilinear)
-        self.up3 = Up(512//fac, 256//fac // factor, bilinear)
-        self.up4 = Up(256//fac, 128//fac // factor, bilinear)
-        self.up5 = Up(128//fac, 64//fac, bilinear)
-        if bilinear:
-            self.outc = OutConv((512)//fac, n_classes)
-        else:
-            self.outc = OutConv((64+128+256+512)//fac, n_classes)
-
-        self.up_s8 = customUp(8)
-        self.up_s4 = customUp(4)
-        self.up_s2 = customUp(2)
+        self.down4 = Down(512, 1024 // factor)
+        self.up1 = Up(1024, 512 // factor, bilinear)
+        self.up2 = Up(512, 256 // factor, bilinear)
+        self.up3 = Up(256, 128 // factor, bilinear)
+        self.up4 = Up(128, 64, bilinear)
+        self.outc = OutConv(64, n_classes)
 
     def forward(self, x):
         x1 = self.inc(x)
@@ -39,21 +28,9 @@ class UNet(nn.Module):
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
-        x6 = self.down5(x5)
-
-        x = self.up1(x6, x5)
-
-        x = self.up2(x, x4)
-        s1 = self.up_s8(x)
-
-        x = self.up3(x, x3)
-        s2 = self.up_s4(x)
-
-        x = self.up4(x, x2)
-        s3 = self.up_s2(x)
-
-        x = self.up5(x, x1)
-
-        x = torch.cat([x,s3,s2,s1],dim=1)
+        x = self.up1(x5, x4)
+        x = self.up2(x, x3)
+        x = self.up3(x, x2)
+        x = self.up4(x, x1)
         logits = self.outc(x)
         return logits
