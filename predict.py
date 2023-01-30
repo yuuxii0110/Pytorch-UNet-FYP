@@ -27,12 +27,18 @@ def predict_img(net,
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
     with torch.no_grad():
-        output = net(img).cpu()
-        output = F.interpolate(output, (full_img.size[1], full_img.size[0]), mode='bilinear')
+        output = net(img)
+
         if net.n_classes > 1:
-            mask = output.argmax(dim=1)
+            probs = F.softmax(output, dim=1)[0]
         else:
-            mask = torch.sigmoid(output) > out_threshold
+            probs = torch.sigmoid(output)[0]
+
+        tf = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize((full_img.size[1], full_img.size[0])),
+            transforms.ToTensor()
+        ])
 
         full_mask = tf(probs.cpu()).squeeze()
 
@@ -69,21 +75,11 @@ def get_output_filenames(args):
     return args.output or list(map(_generate_name, args.input))
 
 
-def mask_to_image(mask: np.ndarray, mask_values):
-    if isinstance(mask_values[0], list):
-        out = np.zeros((mask.shape[-2], mask.shape[-1], len(mask_values[0])), dtype=np.uint8)
-    elif mask_values == [0, 1]:
-        out = np.zeros((mask.shape[-2], mask.shape[-1]), dtype=bool)
-    else:
-        out = np.zeros((mask.shape[-2], mask.shape[-1]), dtype=np.uint8)
-
-    if mask.ndim == 3:
-        mask = np.argmax(mask, axis=0)
-
-    for i, v in enumerate(mask_values):
-        out[mask == i] = v
-
-    return Image.fromarray(out)
+def mask_to_image(mask: np.ndarray):
+    if mask.ndim == 2:
+        return Image.fromarray((mask * 255).astype(np.uint8))
+    elif mask.ndim == 3:
+        return Image.fromarray((np.argmax(mask, axis=0) * 255 / mask.shape[0]).astype(np.uint8))
 
 
 if __name__ == '__main__':
@@ -101,9 +97,7 @@ if __name__ == '__main__':
     print(f'Using device {device}')
 
     net.to(device=device)
-    state_dict = torch.load(args.model, map_location=device)
-    mask_values = state_dict.pop('mask_values', [0, 1])
-    net.load_state_dict(state_dict)
+    net.load_state_dict(torch.load(args.model, map_location=device))
 
     logging.info('Model loaded!')
     # print(folder)
