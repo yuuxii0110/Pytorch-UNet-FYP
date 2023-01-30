@@ -188,11 +188,11 @@ if __name__ == '__main__':
     # n_channels=3 for RGB images
     # n_classes is the number of probabilities you want to get per pixel
 
-    if args.canny:
-        c = 2
-    else:
-        c = 1
-
+    # if args.canny:
+    #     c = 2
+    # else:
+    #     c = 1
+    c = 1
     net = UNet(n_channels=c, n_classes=args.classes, bilinear=args.bilinear)
     
 
@@ -215,7 +215,7 @@ if __name__ == '__main__':
                   img_scale=args.scale,
                   val_percent=args.val / 100,
                   amp=args.amp,
-                  canny=args.canny)
+                  canny=False)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
