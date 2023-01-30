@@ -42,18 +42,9 @@ class UNet(nn.Module):
         x6 = self.down5(x5)
 
         x = self.up1(x6, x5)
-
         x = self.up2(x, x4)
-        s1 = self.up_s8(x)
-
         x = self.up3(x, x3)
-        s2 = self.up_s4(x)
-
         x = self.up4(x, x2)
-        s3 = self.up_s2(x)
-
         x = self.up5(x, x1)
-
-        x = torch.cat([x,s3,s2,s1],dim=1)
         logits = self.outc(x)
         return logits
