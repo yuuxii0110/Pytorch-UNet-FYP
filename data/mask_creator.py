@@ -9,7 +9,7 @@ output_dir = "masks"
 #creating the ground_truth folder if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)
 
-json_files = glob("out_iot_new_storage/*.json")
+json_files = glob("b3_outdoor_cropped_storage/*.json")
 #loading the json file
 for image_json in json_files:
     with open(image_json) as file:
